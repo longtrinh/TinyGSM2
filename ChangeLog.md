@@ -21,11 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ***
 
 
-## [v0.13.0]
+## [v1.0.0]
 TinyGSM2: fork of TinyGSM 0.12.0 (https://github.com/vshymanskyy/TinyGSM), published at https://github.com/longtrinh/TinyGSM2.
 
 ### Changed
 - Library renamed to `TinyGSM2` in `library.properties` and `library.json`; the headers (`TinyGsmClient.h`, ...) are unchanged.
+- First TinyGSM2 release: version 1.0.0, with a new README for the fork.
 - On ESP32, `TINY_GSM_YIELD()` now blocks for one FreeRTOS tick (`vTaskDelay(1)`) instead of `delay(0)`, so long waits let the IDLE task run and no longer trip the task watchdog (which reboots by default on arduino-esp32 3.x).
 - Yields happen only while waiting for the modem, never per received byte: removed the per-byte yield in `waitResponse()`, and `GsmClient::write()`/`available()`/`read()` (and the XBee client) only yield when there is nothing to do.
 - On ESP32, `TINY_GSM_RX_BUFFER` defaults to 1024 bytes (it is still 64 elsewhere).
