@@ -73,8 +73,8 @@ jobs:
             examples/FileDownload,
             examples/MqttClient,
             examples/WebClient,
-            tools/test_build,
-            tools/Diagnostics,
+            extras/test_build,
+            examples/tools/Diagnostics,
           ]
         modem:
           [

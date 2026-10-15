@@ -227,7 +227,7 @@ TinyGSM2 is a drop-in replacement: same headers, same `TinyGsm` / `TinyGsmClient
 - **Power first.** Most modules draw up to 2 A in bursts; an insufficient supply causes resets and failed registrations.
 - **First steps.**
 Disable the SIM PIN (or pass it to `init()`), check that the APN is correct, and attach the antenna.
-Then test the serial link with [tools/AT_Debug](tools/AT_Debug/AT_Debug.ino).
+Then test the serial link with [examples/tools/AT_Debug](examples/tools/AT_Debug/AT_Debug.ino).
 - **See the AT traffic.** Define `TINY_GSM_DEBUG Serial`.
 To dump every AT command, wrap the modem stream with [StreamDebugger](https://github.com/vshymanskyy/StreamDebugger):
   ```cpp
@@ -235,8 +235,8 @@ To dump every AT command, wrap the modem stream with [StreamDebugger](https://gi
   StreamDebugger debugger(SerialAT, SerialMon);
   TinyGsm modem(debugger);
   ```
-- **Diagnostics.** Run [tools/Diagnostics](tools/Diagnostics/Diagnostics.ino) to check SIM, network and data connection step by step.
-- **Bad configuration.** If the module was left in a strange state, [tools/FactoryReset](tools/FactoryReset/FactoryReset.ino) restores factory defaults.
+- **Diagnostics.** Run [examples/tools/Diagnostics](examples/tools/Diagnostics/Diagnostics.ino) to check SIM, network and data connection step by step.
+- **Bad configuration.** If the module was left in a strange state, [examples/tools/FactoryReset](examples/tools/FactoryReset/FactoryReset.ino) restores factory defaults.
 - **Baud rate.** `TinyGsmAutoBaud()` is for bench testing only. In production, use a fixed baud rate.
 - **First connection is slow.** A new SIM, module or location can take many minutes to register. Use generous `waitForNetwork()` time-outs.
 - **HTTP "bad request".** TinyGSM2 gives you a TCP/TLS socket; you must format HTTP yourself or use a library such as ArduinoHttpClient.

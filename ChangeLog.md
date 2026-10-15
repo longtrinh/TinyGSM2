@@ -11,8 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ****
 ### Changed
+- Moved the tool sketches into the library's examples (`examples/tools/AT_Debug`, `AT_Spy`, `Diagnostics`, `FactoryReset`), so they appear under File → Examples → TinyGSM2 → tools. The compile-test sketch moved to `extras/test_build`. This is required by the Arduino Library Manager (Arduino Lint rule LD003).
 
 ### Added
+- `TinyGSM2.h` primary header, named after the library (it includes `TinyGsmClient.h`).
 
 ### Removed
 
