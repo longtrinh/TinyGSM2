@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Removed
+- The PlatformIO CI workflow (`.github/workflows/build_examples_platformio.yaml`) and its README badge.
 
 ### Fixed
 
