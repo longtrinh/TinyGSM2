@@ -9,6 +9,16 @@ TinyGSM2 is a fork of [TinyGSM](https://github.com/vshymanskyy/TinyGSM) 0.12.0 b
 It keeps the same API, headers and class names, so existing TinyGSM sketches compile unchanged.
 It also fixes the stability problems that appear with the current ESP32 Arduino core, and reworks the SIMCom A7672X (A7670/A7672) driver.
 
+> **🤖 Modified by an AI agent**
+>
+> The changes in TinyGSM2 were made by **Claude**, Anthropic's AI coding agent (Claude Code, model Claude Opus 5.5), working under the direction of [longtrinh](https://github.com/longtrinh).
+> Claude analyzed TinyGSM 0.12.0 against the arduino-esp32 3.3.12 source and the SIMCom A76XX AT Command Manual V2.04.
+> It then implemented the fixes, the README and the changelog.
+>
+> Every modem driver was compile-checked with the arduino-esp32 3.3.12 toolchain (with and without `TINY_GSM_USE_MUTEX`).
+> Full linked builds also passed for ESP32, ESP32-S3, ESP32-C3, ESP8266 and AVR.
+> The changes have **not yet been tested on real modem hardware**, so please test them in your setup and report any problems in [Issues](https://github.com/longtrinh/TinyGSM2/issues).
+
 - [Why TinyGSM2?](#why-tinygsm2)
 - [Supported modems](#supported-modems)
 - [Features](#features)
@@ -245,9 +255,10 @@ TinyGSM2 builds on the work of the TinyGSM authors and contributors:
 - SIMCom A7672X: [Giovanni de Rosso Unruh](https://github.com/giovannirosso)
 - All [TinyGSM contributors](https://github.com/vshymanskyy/TinyGSM/graphs/contributors)
 
-TinyGSM2 maintenance and ESP32 3.x / A7672X work: [longtrinh](https://github.com/longtrinh).
+TinyGSM2 maintainer: [longtrinh](https://github.com/longtrinh).
+The ESP32 3.x / A7672X modifications were made by Claude (Anthropic's AI coding agent) under longtrinh's direction.
 
 ## License
 
 Released under the GNU Lesser General Public License v3.0 ([LGPL-3.0](LICENSE)), like the original TinyGSM.
-Copyright (c) 2016 Volodymyr Shymanskyy and TinyGSM contributors; modifications (c) 2026 longtrinh.
+Copyright (c) 2016 Volodymyr Shymanskyy and TinyGSM contributors; modifications (c) 2026 longtrinh, made with Claude (Anthropic's AI coding agent).
