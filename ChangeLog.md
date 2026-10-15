@@ -26,7 +26,7 @@ TinyGSM2: fork of TinyGSM 0.12.0 (https://github.com/vshymanskyy/TinyGSM), publi
 
 ### Changed
 - Library renamed to `TinyGSM2` in `library.properties` and `library.json`; the headers (`TinyGsmClient.h`, ...) are unchanged.
-- First TinyGSM2 release: version 1.0.0, with a new README for the fork.
+- First TinyGSM2 release: version 1.0.0, with a new README for the fork (the changes were made by Claude, Anthropic's AI coding agent, under the maintainer's direction).
 - On ESP32, `TINY_GSM_YIELD()` now blocks for one FreeRTOS tick (`vTaskDelay(1)`) instead of `delay(0)`, so long waits let the IDLE task run and no longer trip the task watchdog (which reboots by default on arduino-esp32 3.x).
 - Yields happen only while waiting for the modem, never per received byte: removed the per-byte yield in `waitResponse()`, and `GsmClient::write()`/`available()`/`read()` (and the XBee client) only yield when there is nothing to do.
 - On ESP32, `TINY_GSM_RX_BUFFER` defaults to 1024 bytes (it is still 64 elsewhere).
@@ -44,6 +44,9 @@ TinyGSM2: fork of TinyGSM 0.12.0 (https://github.com/vshymanskyy/TinyGSM), publi
 - A7672X: secure clients verify the server (`authmode` 1) when a CA certificate has been set with `setCertificate()`.
 
 ### Removed
+- The upstream TinyGSM README (replaced by a TinyGSM2 README).
+- A7672X: the hard-coded Google DNS (`AT+CDNSCFG="8.8.8.8","8.8.4.4"`) in `gprsConnect()`.
+- A7672X: the hard-coded `sslversion` 3 (TLS 1.2) in secure `connect()`.
 
 ### Fixed
 - Clients unregister themselves from the modem when destroyed, so URCs no longer write into a destroyed (e.g. local) `TinyGsmClient`.
