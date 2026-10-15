@@ -120,7 +120,7 @@ class TinyGsmTCP {
     // }
 
     static inline String TinyGsmStringFromIp(IPAddress ip) {
-#if defined(TINY_GSM_PLATFORM_ESP32)
+#if defined(TINY_GSM_ESP32_CORE3)
       // arduino-esp32 3.x IPAddress is dual-stack; operator[] on an IPv6
       // address would return the first raw bytes, not an IPv4 octet.
       if (ip.type() == IPv6) { return ip.toString(); }

@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- Compiles again on arduino-esp32 2.x (e.g. PlatformIO's `espressif32` platform). The IPv6 `IPAddress` code and the `Stream::getTimeout()` call are now used only on arduino-esp32 3.x (`ESP_ARDUINO_VERSION_MAJOR >= 3`). `TinyGsmSerialSetBaud()` uses an overload instead of `if constexpr`, which needs C++17.
+- CI (PlatformIO workflow):
+  - Builds every example/modem combination even when one fails (`fail-fast: false`).
+  - Runs only on pushes to `main` and on pull requests.
+  - Installs `intelhex` for the ESP32 bootloader step.
+  - Uninstalls `TinyGSM2` instead of `TinyGSM` after each build.
+  - Uses `actions/setup-python@v7`.
 
 ***
 

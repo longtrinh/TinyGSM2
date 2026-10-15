@@ -31,6 +31,17 @@
 #if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 #define TINY_GSM_PLATFORM_ESP32
 #include <type_traits>
+#if defined __has_include
+#if __has_include(<esp_arduino_version.h>)
+#include <esp_arduino_version.h>
+#endif
+#endif
+// arduino-esp32 3.x adds a dual-stack (IPv4/IPv6) IPAddress and
+// Stream::getTimeout(); 2.x (still used by PlatformIO's espressif32 platform)
+// has neither.
+#if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
+#define TINY_GSM_ESP32_CORE3
+#endif
 #endif
 
 #ifndef TINY_GSM_YIELD_MS
@@ -182,16 +193,18 @@ const T& TinyGsmMax(const T& a, const T& b) {
  */
 template <class T>
 void TinyGsmSerialSetBaud(T& SerialAT, uint32_t rate) {
-#if defined(TINY_GSM_PLATFORM_ESP32)
-  if constexpr (std::is_base_of<HardwareSerial, T>::value) {
-    if (SerialAT) {
-      SerialAT.updateBaudRate(rate);
-      return;
-    }
-  }
-#endif
   SerialAT.begin(rate);
 }
+
+#if defined(TINY_GSM_PLATFORM_ESP32)
+inline void TinyGsmSerialSetBaud(HardwareSerial& SerialAT, uint32_t rate) {
+  if (SerialAT) {
+    SerialAT.updateBaudRate(rate);
+  } else {
+    SerialAT.begin(rate);
+  }
+}
+#endif
 
 /*
  * Automatically find baud rate
@@ -204,7 +217,7 @@ uint32_t TinyGsmAutoBaud(T& SerialAT, uint32_t minimum = 9600,
                          uint32_t maximum = 115200) {
   static uint32_t rates[] = {115200, 57600,  38400, 19200, 9600,  74400, 74880,
                              230400, 460800, 2400,  4800,  14400, 28800};
-#if defined(TINY_GSM_PLATFORM_ESP32)
+#if defined(TINY_GSM_ESP32_CORE3)
   // Each probe waits for the full stream timeout; 100 ms is plenty for "OK"
   unsigned long oldTimeout = SerialAT.getTimeout();
   SerialAT.setTimeout(100);
@@ -222,7 +235,7 @@ uint32_t TinyGsmAutoBaud(T& SerialAT, uint32_t minimum = 9600,
       String input = SerialAT.readString();
       if (input.indexOf("OK") >= 0) {
         DBG("Modem responded at rate", rate);
-#if defined(TINY_GSM_PLATFORM_ESP32)
+#if defined(TINY_GSM_ESP32_CORE3)
         SerialAT.setTimeout(oldTimeout);
 #endif
         return rate;
@@ -230,7 +243,7 @@ uint32_t TinyGsmAutoBaud(T& SerialAT, uint32_t minimum = 9600,
     }
   }
   TinyGsmSerialSetBaud(SerialAT, minimum);
-#if defined(TINY_GSM_PLATFORM_ESP32)
+#if defined(TINY_GSM_ESP32_CORE3)
   SerialAT.setTimeout(oldTimeout);
 #endif
   return 0;

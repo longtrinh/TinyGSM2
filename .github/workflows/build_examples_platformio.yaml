@@ -1,7 +1,11 @@
 name: Build Examples with PlatformIO
 
-# Triggers the workflow on push or pull request events
-on: [push, pull_request]
+# Runs on pushes to main and on pull requests (not on every branch/tag push,
+# which would build the same commit twice for Dependabot/PR branches)
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -66,6 +70,8 @@ jobs:
       LIBRARY_INSTALL_GIT: ${{ needs.determine_library_source.outputs.library_install_git }}
 
     strategy:
+      # Keep building the other examples/modems when one combination fails
+      fail-fast: false
       matrix:
         example:
           [
@@ -113,7 +119,7 @@ jobs:
           fi
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.x'
 
@@ -121,7 +127,8 @@ jobs:
       - name: Install PlatformIO
         run: |
           python -m pip install --upgrade pip
-          pip install --upgrade platformio
+          # intelhex is needed by esptool when building the ESP32 bootloader
+          pip install --upgrade platformio intelhex
 
       - name: Restore or Cache PlatformIO Platforms and Libraries
         uses: actions/cache@v6
@@ -147,4 +154,4 @@ jobs:
           pio pkg install -g --library ${{ env.LIBRARY_INSTALL_GIT }}
           sed -i 's/\/\/ #define TINY_GSM_MODEM_SIM800/#define TINY_GSM_MODEM_SIM800/g' ${{ matrix.example }}/*
           platformio ci --project-option='build_flags=-D ${{ env.TINYGSM_MODEM_TO_USE }}' --project-option='framework=arduino' --board=uno --board=leonardo --board=yun --board=megaatmega2560 --board=genuino101 --board=mkr1000USB --board=zero --board=teensy31 --board=bluepill_f103c8 --board=uno_pic32 --board=esp01 --board=nodemcuv2 --board=esp32dev
-          pio lib --global uninstall TinyGSM
+          pio lib --global uninstall TinyGSM2

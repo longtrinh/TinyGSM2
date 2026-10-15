@@ -576,16 +576,16 @@ class TinyGsmModem {
   }
 
   // Parses the first address in a modem response, e.g. `10.1.2.3`,
-  // `"10.1.2.3"` or `10.1.2.3,<ipv6>` (dual-stack PDP contexts).  On ESP32,
-  // whose IPAddress is dual-stack, IPv6 addresses in either the colon notation
-  // or the 3GPP 16-octet dotted notation are also understood.
+  // `"10.1.2.3"` or `10.1.2.3,<ipv6>` (dual-stack PDP contexts).  On
+  // arduino-esp32 3.x, whose IPAddress is dual-stack, IPv6 addresses in either
+  // the colon notation or the 3GPP 16-octet dotted notation are also understood.
   static inline IPAddress TinyGsmIpFromString(const String& strIP) {
     String ip = strIP;
     ip.replace("\"", "");
     int comma = ip.indexOf(',');
     if (comma >= 0) { ip.remove(comma); }
     ip.trim();
-#if defined(TINY_GSM_PLATFORM_ESP32)
+#if defined(TINY_GSM_ESP32_CORE3)
     if (ip.indexOf(':') >= 0) {
       IPAddress addr;
       if (addr.fromString(ip)) { return addr; }
@@ -612,7 +612,7 @@ class TinyGsmModem {
     if (count == 4) {
       return IPAddress(octets[0], octets[1], octets[2], octets[3]);
     }
-#if defined(TINY_GSM_PLATFORM_ESP32)
+#if defined(TINY_GSM_ESP32_CORE3)
     if (count == 16) { return IPAddress(IPv6, octets); }
 #endif
     return IPAddress(0, 0, 0, 0);
