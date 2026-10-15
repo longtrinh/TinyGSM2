@@ -2,7 +2,7 @@
 
 A small Arduino library for GSM, LTE and WiFi modules with an AT-command interface, updated for **arduino-esp32 3.x** (ESP-IDF 5.x). It still builds on arduino-esp32 2.x.
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/longtrinh/TinyGSM2/releases)
+[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/longtrinh/TinyGSM2/releases)
 [![License](https://img.shields.io/badge/license-LGPL--3.0-blue.svg)](LICENSE)
 
 TinyGSM2 is a fork of [TinyGSM](https://github.com/vshymanskyy/TinyGSM) 0.12.0 by Volodymyr Shymanskyy and contributors.

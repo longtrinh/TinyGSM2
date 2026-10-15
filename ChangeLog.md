@@ -15,9 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Removed
-- The PlatformIO CI workflow (`.github/workflows/build_examples_platformio.yaml`) and its README badge.
 
 ### Fixed
+
+***
+
+
+## [v1.0.1]
+
+### Changed
+- `library.properties` / `library.json`: the author and maintainer are now Long Trinh, so Arduino Library Manager shows "TinyGSM2 by Long Trinh". The original author, Volodymyr Shymanskyy, is still credited in the library description, `library.json`, the README and the source file headers.
+
+### Removed
+- The PlatformIO CI workflow (`.github/workflows/build_examples_platformio.yaml`) and its README badge.
 
 ***
 
