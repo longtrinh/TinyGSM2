@@ -11,21 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ****
 ### Changed
-- Moved the tool sketches into the library's examples (`examples/tools/AT_Debug`, `AT_Spy`, `Diagnostics`, `FactoryReset`), so they appear under File → Examples → TinyGSM2 → tools. The compile-test sketch moved to `extras/test_build`. This is required by the Arduino Library Manager (Arduino Lint rule LD003).
 
 ### Added
-- `TinyGSM2.h` primary header, named after the library (it includes `TinyGsmClient.h`).
 
 ### Removed
 
 ### Fixed
-- Compiles again on arduino-esp32 2.x (e.g. PlatformIO's `espressif32` platform). The IPv6 `IPAddress` code and the `Stream::getTimeout()` call are now used only on arduino-esp32 3.x (`ESP_ARDUINO_VERSION_MAJOR >= 3`). `TinyGsmSerialSetBaud()` uses an overload instead of `if constexpr`, which needs C++17.
-- CI (PlatformIO workflow):
-  - Builds every example/modem combination even when one fails (`fail-fast: false`).
-  - Runs only on pushes to `main` and on pull requests.
-  - Installs `intelhex` for the ESP32 bootloader step.
-  - Uninstalls `TinyGSM2` instead of `TinyGSM` after each build.
-  - Uses `actions/setup-python@v7`.
 
 ***
 
@@ -36,19 +27,28 @@ TinyGSM2: fork of TinyGSM 0.12.0 (https://github.com/vshymanskyy/TinyGSM), publi
 ### Changed
 - Library renamed to `TinyGSM2` in `library.properties` and `library.json`; the headers (`TinyGsmClient.h`, ...) are unchanged.
 - First TinyGSM2 release: version 1.0.0, with a new README for the fork (the changes were made by Claude, Anthropic's AI coding agent, under the maintainer's direction).
+- Supports arduino-esp32 3.x and 2.x (e.g. PlatformIO's `espressif32` platform). Features that need core 3.x (dual-stack `IPAddress`, `Stream::getTimeout()`) are enabled only when `ESP_ARDUINO_VERSION_MAJOR >= 3`.
+- The tool sketches moved into the library's examples (`examples/tools/AT_Debug`, `AT_Spy`, `Diagnostics`, `FactoryReset`), so they appear under File → Examples → TinyGSM2 → tools. The compile-test sketch moved to `extras/test_build`. This layout is required by the Arduino Library Manager (Arduino Lint rule LD003).
 - On ESP32, `TINY_GSM_YIELD()` now blocks for one FreeRTOS tick (`vTaskDelay(1)`) instead of `delay(0)`, so long waits let the IDLE task run and no longer trip the task watchdog (which reboots by default on arduino-esp32 3.x).
 - Yields happen only while waiting for the modem, never per received byte: removed the per-byte yield in `waitResponse()`, and `GsmClient::write()`/`available()`/`read()` (and the XBee client) only yield when there is nothing to do.
 - On ESP32, `TINY_GSM_RX_BUFFER` defaults to 1024 bytes (it is still 64 elsewhere).
 - Socket payloads are moved from the modem stream into the client FIFO in chunks with `readBytes()` (new `moveCharsFromStreamToFifo()`), instead of one `read()` per byte.
-- `TinyGsmAutoBaud()` keeps the pins and buffer sizes of an ESP32 `HardwareSerial` that is already running (it uses `updateBaudRate()`), and probes each rate with a 100 ms timeout.
-- `TinyGsmIpFromString()` takes the first address of a dual-stack answer and on ESP32 also parses IPv6 addresses; connecting to an IPv6 `IPAddress` on ESP32 passes the IPv6 string to the modem instead of a garbled IPv4 address.
+- `TinyGsmAutoBaud()` keeps the pins and buffer sizes of an ESP32 `HardwareSerial` that is already running (it uses `updateBaudRate()`). On arduino-esp32 3.x it probes each rate with a 100 ms timeout.
+- `TinyGsmIpFromString()` takes the first address of a dual-stack answer. On arduino-esp32 3.x it also parses IPv6 addresses, and connecting to an IPv6 `IPAddress` passes the IPv6 string to the modem instead of a garbled IPv4 address.
 - A7672X: removed the forced Google DNS from `gprsConnect()`; define `TINY_GSM_A7672X_DNS` to override the carrier DNS.
 - A7672X: the SSL version is no longer forced to TLS 1.2 (the value meant something else on TLS 1.3 firmware); define `TINY_GSM_A7672X_SSL_VERSION` to force one.
 - A7672X: `getRegistrationStatus()` checks CEREG, then CGREG, then CREG (LTE Cat-1 modules register on EPS).
+- CI (PlatformIO workflow):
+  - Builds every example/modem combination even when one fails (`fail-fast: false`).
+  - Runs only on pushes to `main` and on pull requests.
+  - Installs `intelhex` for the ESP32 bootloader step.
+  - Uninstalls `TinyGSM2` after each build.
+  - Uses `actions/setup-python@v7`.
 
 ### Added
 - Optional `TINY_GSM_USE_MUTEX` (ESP32) to serialize modem access from several FreeRTOS tasks, and `TINY_GSM_LOCK(modem)` to hold the lock across several calls.
 - `TinyGsmSerialSetBaud()` helper.
+- `TinyGSM2.h` primary header, named after the library (it includes `TinyGsmClient.h`).
 - A7672X: `gprsConnect()` uses the APN user name and password (`AT+CGAUTH`).
 - A7672X: secure clients verify the server (`authmode` 1) when a CA certificate has been set with `setCertificate()`.
 

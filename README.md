@@ -1,9 +1,10 @@
 # TinyGSM2
 
-A small Arduino library for GSM, LTE and WiFi modules with an AT-command interface, updated for **arduino-esp32 3.x** (ESP-IDF 5.x).
+A small Arduino library for GSM, LTE and WiFi modules with an AT-command interface, updated for **arduino-esp32 3.x** (ESP-IDF 5.x). It still builds on arduino-esp32 2.x.
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/longtrinh/TinyGSM2/releases)
 [![License](https://img.shields.io/badge/license-LGPL--3.0-blue.svg)](LICENSE)
+[![Build Examples with PlatformIO](https://github.com/longtrinh/TinyGSM2/actions/workflows/build_examples_platformio.yaml/badge.svg)](https://github.com/longtrinh/TinyGSM2/actions/workflows/build_examples_platformio.yaml)
 
 TinyGSM2 is a fork of [TinyGSM](https://github.com/vshymanskyy/TinyGSM) 0.12.0 by Volodymyr Shymanskyy and contributors.
 It keeps the same API, headers and class names, so existing TinyGSM sketches compile unchanged.
@@ -17,6 +18,8 @@ It also fixes the stability problems that appear with the current ESP32 Arduino 
 >
 > Every modem driver was compile-checked with the arduino-esp32 3.3.12 toolchain (with and without `TINY_GSM_USE_MUTEX`).
 > Full linked builds also passed for ESP32, ESP32-S3, ESP32-C3, ESP8266 and AVR.
+> On every push, GitHub Actions also builds the examples with PlatformIO on 13 boards: AVR, SAMD, STM32, Teensy, PIC32, ESP8266, and ESP32 with arduino-esp32 2.x.
+> The build badge above shows the current result.
 > The changes have **not yet been tested on real modem hardware**, so please test them in your setup and report any problems in [Issues](https://github.com/longtrinh/TinyGSM2/issues).
 
 - [Why TinyGSM2?](#why-tinygsm2)
@@ -42,7 +45,7 @@ TinyGSM2 fixes this:
 - The library yields only while it is waiting, never once per received byte, so modem data bursts are not lost.
 - Socket data is read in chunks, and a read time-out no longer inserts `0xFF` bytes into your data.
 - The receive buffer defaults to 1024 bytes on ESP32.
-- IPv6-aware `IPAddress` handling for the dual-stack `IPAddress` in core 3.x.
+- IPv6-aware handling of the dual-stack `IPAddress` in core 3.x. Core 2.x (used by PlatformIO's `espressif32` platform) still builds, with IPv4 only.
 - `TinyGsmAutoBaud()` keeps the pins and buffer sizes of an already started `HardwareSerial`.
 - Optional mutex (`TINY_GSM_USE_MUTEX`) so several FreeRTOS tasks can share one modem safely.
 
@@ -88,7 +91,7 @@ The full list is in [ChangeLog.md](ChangeLog.md).
 | Digi XBee WiFi / Cellular (command mode) | `TINY_GSM_MODEM_XBEE` |
 | ESP8266 / ESP32 running the ESP-AT firmware | `TINY_GSM_MODEM_ESP8266` / `TINY_GSM_MODEM_ESP32` |
 
-Define exactly **one** modem before `#include <TinyGsmClient.h>`.
+Define exactly **one** modem before `#include <TinyGsmClient.h>`. `#include <TinyGSM2.h>` works the same way.
 
 ## Features
 
@@ -119,6 +122,13 @@ Alternatively, clone it into your libraries folder:
 lib_deps =
     https://github.com/longtrinh/TinyGSM2.git
 ```
+
+**Examples.** After installing, the examples are under **File → Examples → TinyGSM2**.
+The helper sketches are in the **tools** sub-menu:
+- `AT_Debug`: auto-detects the baud rate, then lets you type AT commands to the modem.
+- `AT_Spy`: listens in on the AT traffic between another microcontroller and the modem.
+- `Diagnostics`: check SIM, network and data step by step.
+- `FactoryReset`: restore the modem's factory settings.
 
 ## Quick start (ESP32 + A7672X)
 
