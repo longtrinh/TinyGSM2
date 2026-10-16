@@ -65,6 +65,11 @@ jobs:
         include:
           - modem: SIM7600
             extra-flags: -DTINY_GSM_USE_HEX
+          # The HttpClient example's default 650-byte RX buffer leaves the Uno
+          # 56 bytes short of RAM with the A7672X driver
+          - board: uno
+            modem: A7672X
+            extra-flags: -DTINY_GSM_RX_BUFFER=256
           - board: esp32s3
             fqbn: esp32:esp32:esp32s3
             platforms: |
@@ -99,7 +104,7 @@ jobs:
             platforms: |
               - name: arduino:samd
           - board: stm32
-            fqbn: STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_F411RE
+            fqbn: STMicroelectronics:stm32:GenF1:pnum=BLUEPILL_F103CB
             platforms: |
               - name: STMicroelectronics:stm32
                 source-url: https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json

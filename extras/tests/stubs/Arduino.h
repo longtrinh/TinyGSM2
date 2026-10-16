@@ -54,6 +54,10 @@ class String {
     s += std::to_string(v);
     return *this;
   }
+  int indexOf(const char* c) const {
+    size_t i = s.find(c);
+    return i == std::string::npos ? -1 : static_cast<int>(i);
+  }
   void        reserve(unsigned) {}
   const char* c_str() const {
     return s.c_str();
