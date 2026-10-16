@@ -406,7 +406,9 @@ class TinyGsmSaraR5 : public TinyGsmModem<TinyGsmSaraR5>,
                          &rcid, strPdpType, strApn, &ipOct[0], &ipOct[1],
                          &ipOct[2], &ipOct[3]);
 
-        if (!strcmp(strApn, apn)) {
+        // At least <cid>,<PDP_type>,<APN> must have been parsed, otherwise
+        // strApn is uninitialized
+        if (scanned >= 3 && !strcmp(strApn, apn)) {
           // found the configuration that we want to connect to
           break;
         }

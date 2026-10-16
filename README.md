@@ -26,6 +26,7 @@ It also fixes the stability problems that appear with the current ESP32 Arduino 
 - [Quick start (ESP32 + A7672X)](#quick-start-esp32--a7672x)
 - [Configuration options](#configuration-options)
 - [ESP32 notes](#esp32-notes)
+- [PlatformIO and ESP-IDF](#platformio-and-esp-idf)
 - [Migrating from TinyGSM](#migrating-from-tinygsm)
 - [Troubleshooting](#troubleshooting)
 - [Credits](#credits)
@@ -108,8 +109,8 @@ See [examples/AllFunctions](examples/AllFunctions/AllFunctions.ino) for the comp
 
 **Arduino IDE**
 1. Remove the original TinyGSM library if you have it installed (both provide `TinyGsmClient.h`).
-2. Download this repository as a ZIP (**Code → Download ZIP**) and use **Sketch → Include Library → Add .ZIP Library...**.
-Alternatively, clone it into your libraries folder:
+2. Open **Library Manager** (**Tools → Manage Libraries...**), search for **TinyGSM2** and click **Install**.
+Alternatively, download a release ZIP and use **Sketch → Include Library → Add .ZIP Library...**, or clone the repository into your libraries folder:
    ```bash
    git clone https://github.com/longtrinh/TinyGSM2.git
    ```
@@ -117,8 +118,9 @@ Alternatively, clone it into your libraries folder:
 **PlatformIO**
 ```ini
 lib_deps =
-    https://github.com/longtrinh/TinyGSM2.git
+    https://github.com/longtrinh/TinyGSM2.git#v1.0.1
 ```
+See [PlatformIO and ESP-IDF](#platformio-and-esp-idf) for platform choices and ESP-IDF use.
 
 **Examples.** After installing, the examples are under **File → Examples → TinyGSM2**.
 The helper sketches are in the **tools** sub-menu:
@@ -216,6 +218,57 @@ Use [ArduinoHttpClient](https://github.com/arduino-libraries/ArduinoHttpClient) 
 - **Alternative: PPP.** arduino-esp32 3.x also ships a native `PPP` library.
 It turns the modem into a full lwIP network interface, so `NetworkClient`, `NetworkClientSecure`, `HTTPClient` and the rest work unchanged.
 That can be a good fit for TCP/TLS-heavy projects; TinyGSM2 remains handy for SMS, calls, GNSS and modem management.
+
+## PlatformIO and ESP-IDF
+
+### VS Code + PlatformIO (Arduino framework)
+
+TinyGSM2 is not in the PlatformIO registry; install it from GitHub, ideally pinned to a release tag:
+
+```ini
+[env:esp32-s3]
+platform  = espressif32
+board     = esp32-s3-devkitc-1
+framework = arduino
+lib_deps  = https://github.com/longtrinh/TinyGSM2.git#v1.0.1
+build_flags = -D TINY_GSM_MODEM_A7672X
+```
+
+- **Official `espressif32` platform.** It ships arduino-esp32 **2.0.x**. TinyGSM2 builds and runs there, but IPv6 `IPAddress` support is off (it needs core 3.x).
+Verified with PlatformIO Core 6.2 / platform 7.1.3 (Arduino 2.0.17) on ESP32-S3 and ESP32-C3.
+- **arduino-esp32 3.x in PlatformIO.** Use the community [pioarduino](https://github.com/pioarduino/platform-espressif32) platform, which ships the same 3.x core that the Arduino IDE uses:
+  ```ini
+  platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+  ```
+- **`framework = espidf` alone is not supported.**
+TinyGSM2 is built on the Arduino API (`Stream`, `Client`, `String`, `millis()`), so PlatformIO skips it in a pure ESP-IDF project.
+Use `framework = arduino, espidf` (Arduino as an ESP-IDF component) on a platform that supports it, such as pioarduino.
+- **VS Code IntelliSense:** to get code highlighting when you open the library's `.tpp` template files, add this to `.vscode/settings.json`:
+  ```json
+  "files.associations": { "*.tpp": "cpp" }
+  ```
+
+### ESP-IDF (`idf.py`) with Arduino as a component
+
+TinyGSM2 includes a `CMakeLists.txt`, so it can be used as an ESP-IDF component.
+It requires the arduino-esp32 component (3.x supports ESP-IDF 5.3 – 6.1).
+
+1. Add Arduino to your ESP-IDF project:
+   ```bash
+   idf.py add-dependency "espressif/arduino-esp32^3.3.0"
+   ```
+2. Clone TinyGSM2 into the project's `components` folder:
+   ```bash
+   git clone https://github.com/longtrinh/TinyGSM2.git components/TinyGSM2
+   ```
+3. In `main/CMakeLists.txt`, add `REQUIRES TinyGSM2`, and define your modem before including the header (or add it with `target_compile_definitions`).
+4. Configure the project for Arduino as Espressif describes in [Arduino as an ESP-IDF component](https://docs.espressif.com/projects/arduino-esp32/en/latest/esp-idf_component.html). For example, `CONFIG_FREERTOS_HZ=1000`.
+
+TinyGSM2 declares `REQUIRES arduino-esp32`. That name matches the component added in step 1.
+If you copied arduino-esp32 into `components/` by hand, name that folder `arduino-esp32`, not `arduino`.
+
+TinyGSM2 compiles warning-free with the ESP-IDF 6.1 toolchain (GCC 15.2) using `-Wall -Wextra -Werror=all`.
+A complete `idf.py` application build has not been tested yet.
 
 ## Migrating from TinyGSM
 
