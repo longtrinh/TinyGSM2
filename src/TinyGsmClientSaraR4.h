@@ -34,6 +34,7 @@
 #include "TinyGsmSSL.tpp"
 #include "TinyGsmGPRS.tpp"
 #include "TinyGsmSMS.tpp"
+#undef TINY_GSM_MODEM_HAS_USSD  // sendUSSD() is not supported
 #include "TinyGsmGSMLocation.tpp"
 #include "TinyGsmGPS.tpp"
 #include "TinyGsmTime.tpp"
@@ -106,6 +107,7 @@ class TinyGsmSaraR4 : public TinyGsmModem<TinyGsmSaraR4>,
     virtual int connect(const char* host, uint16_t port, int timeout_s) {
       if (!at) return 0;
       TINY_GSM_LOCK(*at);
+      clearWriteError();  // a new connection starts without a write error
       // stop();  // DON'T stop!
       TINY_GSM_YIELD();
       rx.clear();
@@ -190,6 +192,7 @@ class TinyGsmSaraR4 : public TinyGsmModem<TinyGsmSaraR4>,
     int connect(const char* host, uint16_t port, int timeout_s) override {
       if (!at) return 0;
       TINY_GSM_LOCK(*at);
+      clearWriteError();  // a new connection starts without a write error
       // stop();  // DON'T stop!
       TINY_GSM_YIELD();
       rx.clear();

@@ -576,26 +576,50 @@ class TinyGsmModem {
   }
 
   // Parses the first address in a modem response, e.g. `10.1.2.3`,
-  // `"10.1.2.3"` or `10.1.2.3,<ipv6>` (dual-stack PDP contexts).  On
-  // arduino-esp32 3.x, whose IPAddress is dual-stack, IPv6 addresses in either
-  // the colon notation or the 3GPP 16-octet dotted notation are also understood.
+  // `"10.1.2.3"`, `+IPADDR: 10.1.2.3`, `1,10.1.2.3` or `10.1.2.3,<ipv6>`
+  // (dual-stack PDP contexts).  Like the original parser, text before the
+  // first digit is ignored.  On arduino-esp32 3.x, whose IPAddress is
+  // dual-stack, IPv6 addresses in either the colon notation or the 3GPP
+  // 16-octet dotted notation are also understood.
   static inline IPAddress TinyGsmIpFromString(const String& strIP) {
     String ip = strIP;
     ip.replace("\"", "");
-    int comma = ip.indexOf(',');
-    if (comma >= 0) { ip.remove(comma); }
     ip.trim();
+    // Drop a response prefix such as "+IPADDR:" or "+CGPADDR:"
+    if (ip.startsWith("+")) {
+      int colon = ip.indexOf(':');
+      if (colon >= 0) { ip.remove(0, colon + 1); }
+    }
+    // Use the first comma-separated field that looks like an address, so
+    // "<cid>,<ip>" and "<ipv4>,<ipv6>" both give the right one
+    unsigned int start = 0;
+    while (true) {
+      int    comma = ip.indexOf(',', start);
+      String field = comma < 0 ? ip.substring(start)
+                               : ip.substring(start, comma);
+      field.trim();
+      if (comma < 0 || field.indexOf('.') >= 0 || field.indexOf(':') >= 0) {
+        ip = field;
+        break;
+      }
+      start = comma + 1;
+    }
 #if defined(TINY_GSM_ESP32_CORE3)
     if (ip.indexOf(':') >= 0) {
       IPAddress addr;
       if (addr.fromString(ip)) { return addr; }
-      return IPAddress(0, 0, 0, 0);
+      // Not IPv6 (e.g. "ip:10.1.2.3"); fall through to the IPv4 parser
     }
 #endif
+    // Skip any leading text before the first digit
+    unsigned int first = 0;
+    while (first < ip.length() && !(ip[first] >= '0' && ip[first] <= '9')) {
+      first++;
+    }
     uint8_t octets[16];
     uint8_t count = 0;
     int     value = -1;
-    for (unsigned int i = 0; i < ip.length(); i++) {
+    for (unsigned int i = first; i < ip.length(); i++) {
       char c = ip[i];
       if (c >= '0' && c <= '9') {
         value = (value < 0 ? 0 : value * 10) + (c - '0');
@@ -608,6 +632,8 @@ class TinyGsmModem {
         break;
       }
     }
+    // A dot not followed by a number (e.g. "1.2.3.4.nip.io") is a host name
+    if (value < 0 && count > 0) { return IPAddress(0, 0, 0, 0); }
     if (value >= 0 && count < 16) { octets[count++] = value; }
     if (count == 4) {
       return IPAddress(octets[0], octets[1], octets[2], octets[3]);

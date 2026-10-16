@@ -42,6 +42,7 @@
 #include "TinyGsmTCP.tpp"
 #include "TinyGsmSSL.tpp"
 #include "TinyGsmSMS.tpp"
+#undef TINY_GSM_MODEM_HAS_USSD  // sendUSSD() is not supported
 #include "TinyGsmTemperature.tpp"
 #include "TinyGsmBattery.tpp"
 
@@ -128,6 +129,7 @@ class TinyGsmXBee : public TinyGsmModem<TinyGsmXBee>,
     virtual int connect(const char* host, uint16_t port, int timeout_s) {
       if (!at) return 0;
       TINY_GSM_LOCK(*at);
+      clearWriteError();  // a new connection starts without a write error
       // NOTE:  Not caling stop() or yeild() here
       at->streamClear();  // Empty anything in the buffer before starting
       sock_connected = at->modemConnect(host, port, mux, false, timeout_s);
@@ -277,6 +279,7 @@ class TinyGsmXBee : public TinyGsmModem<TinyGsmXBee>,
     int connect(const char* host, uint16_t port, int timeout_s) override {
       if (!at) return 0;
       TINY_GSM_LOCK(*at);
+      clearWriteError();  // a new connection starts without a write error
       // NOTE:  Not caling stop() or yeild() here
       at->streamClear();  // Empty anything in the buffer before starting
       sock_connected = at->modemConnect(host, port, mux, true, timeout_s);

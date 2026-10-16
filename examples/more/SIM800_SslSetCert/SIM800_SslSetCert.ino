@@ -24,8 +24,14 @@
 // Set serial for debug console (to the Serial Monitor, speed 115200)
 #define SerialMon Serial
 
-// Use Hardware Serial for AT commands
+// Use Hardware Serial for AT commands on Mega, Leonardo, Micro, ESP32...
+#ifndef __AVR_ATmega328P__
 #define SerialAT Serial1
+// or Software Serial on Uno, Nano
+#else
+#include <SoftwareSerial.h>
+SoftwareSerial SerialAT(2, 3);  // RX, TX
+#endif
 
 // Uncomment this if you want to see all AT commands
 // #define DUMP_AT_COMMANDS

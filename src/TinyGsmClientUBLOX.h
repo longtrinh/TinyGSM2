@@ -106,6 +106,7 @@ class TinyGsmUBLOX : public TinyGsmModem<TinyGsmUBLOX>,
     virtual int connect(const char* host, uint16_t port, int timeout_s) {
       if (!at) return 0;
       TINY_GSM_LOCK(*at);
+      clearWriteError();  // a new connection starts without a write error
       // stop();  // DON'T stop!
       TINY_GSM_YIELD();
       rx.clear();
@@ -156,6 +157,7 @@ class TinyGsmUBLOX : public TinyGsmModem<TinyGsmUBLOX>,
     int connect(const char* host, uint16_t port, int timeout_s) override {
       if (!at) return 0;
       TINY_GSM_LOCK(*at);
+      clearWriteError();  // a new connection starts without a write error
       // stop();  // DON'T stop!
       TINY_GSM_YIELD();
       rx.clear();

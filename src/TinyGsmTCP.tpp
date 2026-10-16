@@ -15,13 +15,22 @@
 
 #include "TinyGsmFifo.h"
 
+// Default kept at 64 bytes, as in TinyGSM, so existing sketches behave the
+// same: each socket read moves at most 63 bytes, which fits the default
+// 256-byte UART buffer of most cores.  For more throughput on ESP32, define
+// TINY_GSM_RX_BUFFER 1024 and enlarge the UART buffer with
+// SerialAT.setRxBufferSize(4096) before SerialAT.begin().
 #if !defined(TINY_GSM_RX_BUFFER)
-#if defined(TINY_GSM_PLATFORM_ESP32)
-// ESP32 has plenty of RAM; a tiny buffer means one AT round-trip per 63 bytes
-#define TINY_GSM_RX_BUFFER 1024
-#else
 #define TINY_GSM_RX_BUFFER 64
 #endif
+
+// Largest number of bytes handed to the modem in one send command.  Modems
+// limit a single send (e.g. SIM7600 1500, SIM800/BG96 1460, u-blox 1024
+// bytes), so larger writes are split.  Libraries such as PubSubClient write a
+// whole MQTT packet at once and treat anything short of the full length as a
+// failure.
+#if !defined(TINY_GSM_SEND_MAX_SIZE)
+#define TINY_GSM_SEND_MAX_SIZE 1024
 #endif
 
 // Because of the ordering of resolution of overrides in templates, these need
@@ -142,15 +151,32 @@ class TinyGsmTCP {
     //   stop(15000L);
     // }
 
-    // Writes data out on the client using the modem send functionality
+    // Writes data out on the client using the modem send functionality, in
+    // chunks of at most TINY_GSM_SEND_MAX_SIZE bytes.  Returns the number of
+    // bytes the modem accepted (the full size unless a send failed).  A failed
+    // send also sets the Print write error (getWriteError()), which is cleared
+    // again by the next connect().
     size_t write(const uint8_t* buf, size_t size) override {
       if (!at || buf == nullptr || size == 0) return 0;
       TINY_GSM_LOCK(*at);
       at->maintain();
-      // Drivers return the number of bytes sent (int16_t or size_t); never
-      // let an error value turn into a huge size_t
-      long sent = static_cast<long>(at->modemSend(buf, size, mux));
-      return sent > 0 ? static_cast<size_t>(sent) : 0;
+      size_t total = 0;
+      while (total < size) {
+        size_t chunk = TinyGsmMin(size - total,
+                                  static_cast<size_t>(TINY_GSM_SEND_MAX_SIZE));
+        // Drivers return the number of bytes sent (int16_t or size_t); never
+        // let an error value turn into a huge size_t
+        long sent = static_cast<long>(at->modemSend(buf + total, chunk, mux));
+        if (sent <= 0) {
+          // Tell callers (e.g. ESP_SSLClient checks getWriteError()) that the
+          // modem refused the data, rather than that the socket just closed
+          setWriteError();
+          break;
+        }
+        total += static_cast<size_t>(sent);
+        if (static_cast<size_t>(sent) < chunk) { break; }  // modem buffer full
+      }
+      return total;
     }
 
     size_t write(uint8_t c) override {

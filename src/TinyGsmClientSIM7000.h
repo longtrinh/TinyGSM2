@@ -76,6 +76,7 @@ class TinyGsmSim7000 : public TinyGsmSim70xx<TinyGsmSim7000>,
     virtual int connect(const char* host, uint16_t port, int timeout_s) {
       if (!at) return 0;
       TINY_GSM_LOCK(*at);
+      clearWriteError();  // a new connection starts without a write error
       stop();
       TINY_GSM_YIELD();
       rx.clear();
@@ -364,6 +365,12 @@ class TinyGsmSim7000 : public TinyGsmSim70xx<TinyGsmSim7000>,
 
   size_t modemRead(size_t size, uint8_t mux) {
     if (!sockets[mux]) return 0;
+    // The modem rejects requests above its per-read limit with ERROR
+#ifdef TINY_GSM_USE_HEX
+    size = TinyGsmMin(size, static_cast<size_t>(730));  // AT+CIPRXGET=3
+#else
+    size = TinyGsmMin(size, static_cast<size_t>(1460));  // AT+CIPRXGET=2
+#endif
 
 #ifdef TINY_GSM_USE_HEX
     sendAT(GF("+CIPRXGET=3,"), mux, ',', (uint16_t)size);

@@ -18,6 +18,10 @@
 
 #include <TinyGsmClient.h>
 
+#if !defined(TINY_GSM_MODEM_HAS_GPRS)
+#error "This example is for the Hologram Dash and its built-in cellular modem (SIM card, GPRS/LTE)."
+#endif
+
 // Uncomment this if you want to see all AT commands
 // #define DUMP_AT_COMMANDS
 

@@ -101,6 +101,10 @@ const int  port       = 443;
 #include <TinyGsmClient.h>
 #include <ArduinoHttpClient.h>
 
+#if !defined(TINY_GSM_MODEM_HAS_SSL)
+#error "This modem has no SSL/TLS support in TinyGSM2. Use the HttpClient example (plain HTTP) instead."
+#endif
+
 // Just in case someone defined the wrong thing..
 #if TINY_GSM_USE_GPRS && not defined TINY_GSM_MODEM_HAS_GPRS
 #undef TINY_GSM_USE_GPRS

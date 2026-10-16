@@ -12,6 +12,8 @@
 #include "TinyGsmCommon.h"
 
 #define TINY_GSM_MODEM_HAS_SMS
+// sendUSSD() is available; drivers without USSD support #undef this
+#define TINY_GSM_MODEM_HAS_USSD
 
 template <class modemType>
 class TinyGsmSMS {

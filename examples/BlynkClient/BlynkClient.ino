@@ -60,6 +60,11 @@
 // #define TINY_GSM_MODEM_SEQUANS_MONARCH
 
 #include <TinyGsmClient.h>
+
+#if !defined(TINY_GSM_MODEM_HAS_GPRS)
+#error "BlynkSimpleTinyGSM needs a cellular modem (SIM card, GPRS/LTE). For an ESP8266/ESP32 running AT firmware, use Blynk's ESP8266_Shield example instead."
+#endif
+
 #include <BlynkSimpleTinyGSM.h>
 
 // Set serial for debug console (to the Serial Monitor, default speed 115200)

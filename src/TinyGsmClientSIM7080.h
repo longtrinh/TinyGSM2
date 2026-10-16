@@ -79,6 +79,7 @@ class TinyGsmSim7080 : public TinyGsmSim70xx<TinyGsmSim7080>,
     virtual int connect(const char* host, uint16_t port, int timeout_s) {
       if (!at) return 0;
       TINY_GSM_LOCK(*at);
+      clearWriteError();  // a new connection starts without a write error
       stop();
       TINY_GSM_YIELD();
       rx.clear();
@@ -124,6 +125,7 @@ class TinyGsmSim7080 : public TinyGsmSim70xx<TinyGsmSim7080>,
     int connect(const char* host, uint16_t port, int timeout_s) override {
       if (!at) return 0;
       TINY_GSM_LOCK(*at);
+      clearWriteError();  // a new connection starts without a write error
       stop();
       TINY_GSM_YIELD();
       rx.clear();

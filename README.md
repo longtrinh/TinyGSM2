@@ -2,7 +2,7 @@
 
 A small Arduino library for GSM, LTE and WiFi modules with an AT-command interface, updated for **arduino-esp32 3.x** (ESP-IDF 5.x). It still builds on arduino-esp32 2.x.
 
-[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/longtrinh/TinyGSM2/releases)
+[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/longtrinh/TinyGSM2/releases)
 [![License](https://img.shields.io/badge/license-LGPL--3.0-blue.svg)](LICENSE)
 
 TinyGSM2 is a fork of [TinyGSM](https://github.com/vshymanskyy/TinyGSM) 0.12.0 by Volodymyr Shymanskyy and contributors.
@@ -15,8 +15,10 @@ It also fixes the stability problems that appear with the current ESP32 Arduino 
 > Claude analyzed TinyGSM 0.12.0 against the arduino-esp32 3.3.12 source and the SIMCom A76XX AT Command Manual V2.04.
 > It then implemented the fixes, the README and the changelog.
 >
-> Every modem driver was compile-checked with the arduino-esp32 3.3.12 toolchain (with and without `TINY_GSM_USE_MUTEX`).
-> Full linked builds also passed for ESP32, ESP32-S3, ESP32-C3, ESP8266 and AVR.
+> Every modem driver compiles warning-free with the arduino-esp32 3.3.12 toolchain and the ESP-IDF 6.1 toolchain (`-Werror=all`), with and without `TINY_GSM_USE_MUTEX`.
+> Full linked builds also passed for ESP32, ESP32-S3, ESP32-C3, ESP8266, AVR, and PlatformIO (official `espressif32` platform).
+> All example sketches compile for every supported modem on ESP32-S3, Arduino Mega and Arduino Uno.
+> PubSubClient (legacy 2.8 and PubSubClient3) and ESP_SSLClient (2.2.2 and 3.1.3) were tested on top of TinyGSM2 with a simulated modem.
 > The changes have **not yet been tested on real modem hardware**, so please test them in your setup and report any problems in [Issues](https://github.com/longtrinh/TinyGSM2/issues).
 
 - [Why TinyGSM2?](#why-tinygsm2)
@@ -42,7 +44,7 @@ TinyGSM2 fixes this:
 - Waits no longer starve the IDLE task, so long modem operations stop triggering task-watchdog reboots.
 - The library yields only while it is waiting, never once per received byte, so modem data bursts are not lost.
 - Socket data is read in chunks, and a read time-out no longer inserts `0xFF` bytes into your data.
-- The receive buffer defaults to 1024 bytes on ESP32.
+- Bigger receive buffers are safe: each read stays within the modem's per-request limit. The default is still 64 bytes, as in TinyGSM.
 - IPv6-aware handling of the dual-stack `IPAddress` in core 3.x. Core 2.x (used by PlatformIO's `espressif32` platform) still builds, with IPv4 only.
 - `TinyGsmAutoBaud()` keeps the pins and buffer sizes of an already started `HardwareSerial`.
 - Optional mutex (`TINY_GSM_USE_MUTEX`) so several FreeRTOS tasks can share one modem safely.
@@ -51,6 +53,9 @@ TinyGSM2 fixes this:
 - Clients unregister from the modem when destroyed. A local `TinyGsmClient` no longer causes random crashes later.
 - A client that has not been `init()`'ed yet is safe to use; PubSubClient, for example, calls `connected()` before connecting.
 - Bytes >= 0x80 are no longer dropped from responses, `peek()` follows the Arduino contract, and several length/overflow bugs are fixed.
+- Large writes are split into chunks the modem accepts, so MQTT packets and TLS records bigger than the modem's per-send limit (e.g. 1500 bytes on the SIM7600) no longer fail.
+- A send the modem refuses sets `getWriteError()`, so TLS libraries such as ESP_SSLClient can report it.
+- Socket reads stay within each modem's per-request limit (e.g. 750 bytes in SIMCom HEX mode), and `localIP()` parses every modem's answer format.
 
 **SIMCom A7672X**
 - Release builds work: the old driver sent `ATV0` without `TINY_GSM_DEBUG`, which broke every response check.
@@ -97,11 +102,11 @@ Define exactly **one** modem before `#include <TinyGsmClient.h>`. `#include <Tin
 For example: A7672X 10, SIM7600 10, SIM800 5, BG96 12, SIM7080 12, XBee 1.
 - **SSL/TLS** on SIM800 (firmware dependent), SIM7000SSL, SIM7080, A7672X, BG95/BG96, u-blox, Sequans Monarch, XBee cellular and ESP8266.
   - Not supported on SIM5360/SIM7600, SIM900, A6/A7, M590 and XBee WiFi.
-  - TLS can also be done on the MCU with a library such as [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) on top of a plain `TinyGsmClient`.
+  - TLS can also be done on the MCU with a library such as [ESP_SSLClient](https://github.com/mobizt/ESP_SSLClient) (2.2.2 and 3.1.3 tested) on top of a plain `TinyGsmClient`.
 - **SMS** sending, **USSD**, **voice calls** (dial, hang up, DTMF) on most cellular modems.
 - **GPS/GNSS** (SIM808, SIM7000, SIM7600, BG96/BG95, u-blox with external GPS) and **GSM location** (SIM800, SIM7000, Quectel, u-blox).
 - **Network time / NTP**, battery and temperature readings on supported modems.
-- The standard Arduino **`Client`** interface, so it works with PubSubClient, ArduinoMqttClient, ArduinoHttpClient, Blynk and similar libraries.
+- The standard Arduino **`Client`** interface, so it works with PubSubClient (both the legacy 2.8 and **PubSubClient3**), ArduinoMqttClient, ArduinoHttpClient, Blynk and similar libraries. Large writes, such as MQTT packets of several kB set up with `setBufferSize()`, are split into chunks the modem accepts.
 
 See [examples/AllFunctions](examples/AllFunctions/AllFunctions.ino) for the complete API.
 
@@ -115,10 +120,10 @@ Alternatively, download a release ZIP and use **Sketch → Include Library → A
    git clone https://github.com/longtrinh/TinyGSM2.git
    ```
 
-**PlatformIO**
+**PlatformIO**: TinyGSM2 is in the [PlatformIO registry](https://registry.platformio.org/libraries/longtrinh/TinyGSM2) (search for "TinyGSM2" in the PlatformIO **Libraries** view):
 ```ini
 lib_deps =
-    https://github.com/longtrinh/TinyGSM2.git#v1.0.2
+    longtrinh/TinyGSM2@^1.0.3
 ```
 See [PlatformIO and ESP-IDF](#platformio-and-esp-idf) for platform choices and ESP-IDF use.
 
@@ -189,7 +194,8 @@ Define these **before** `#include <TinyGsmClient.h>`:
 | Option | Default | Purpose |
 |---|---|---|
 | `TINY_GSM_MODEM_xxx` | (required) | Selects the modem driver; see [Supported modems](#supported-modems) |
-| `TINY_GSM_RX_BUFFER` | 1024 on ESP32, 64 elsewhere | Per-socket receive FIFO size (bytes) |
+| `TINY_GSM_RX_BUFFER` | 64 | Per-socket receive FIFO size (bytes). On ESP32, 1024 gives much better throughput, together with a larger UART buffer. |
+| `TINY_GSM_SEND_MAX_SIZE` | 1024 | Largest chunk handed to the modem per send command. Bigger `write()`s (e.g. a large MQTT packet) are split automatically. |
 | `TINY_GSM_DEBUG` | off | Stream for library debug output, e.g. `Serial` |
 | `TINY_GSM_USE_MUTEX` | off | ESP32: serialize modem access across FreeRTOS tasks |
 | `TINY_GSM_YIELD_MS` | 0 | Milliseconds to block while waiting for the modem (0 = one RTOS tick on ESP32) |
@@ -199,8 +205,9 @@ Define these **before** `#include <TinyGsmClient.h>`:
 
 ## ESP32 notes
 
-- **Enlarge the UART receive buffer.** The core's default is 256 bytes, but the modem sends socket data in 1–2 kB bursts.
-Call `SerialAT.setRxBufferSize(4096)` before `SerialAT.begin(...)`, and always pass your RX/TX pins to `begin()`.
+- **Faster socket reads (optional).** By default each read moves at most 63 bytes, like TinyGSM, which works with the core's default 256-byte UART buffer.
+For more throughput, define `TINY_GSM_RX_BUFFER 1024`. The modem then sends up to 1–2 kB per read, so also enlarge the UART buffer: call `SerialAT.setRxBufferSize(4096)` before `SerialAT.begin(...)`.
+Always pass your RX/TX pins to `begin()`.
 - **Use one task, or turn on the mutex.** TinyGSM2 blocks while it waits for the modem.
 If more than one FreeRTOS task uses the modem, define `TINY_GSM_USE_MUTEX`.
 To keep a group of calls together (or to protect functions that only exist in one modem driver), hold the lock yourself:
@@ -223,14 +230,14 @@ That can be a good fit for TCP/TLS-heavy projects; TinyGSM2 remains handy for SM
 
 ### VS Code + PlatformIO (Arduino framework)
 
-TinyGSM2 is not in the PlatformIO registry; install it from GitHub, ideally pinned to a release tag:
+Install TinyGSM2 from the PlatformIO registry, pinned to a version range:
 
 ```ini
 [env:esp32-s3]
 platform  = espressif32
 board     = esp32-s3-devkitc-1
 framework = arduino
-lib_deps  = https://github.com/longtrinh/TinyGSM2.git#v1.0.2
+lib_deps  = longtrinh/TinyGSM2@^1.0.3
 build_flags = -D TINY_GSM_MODEM_A7672X
 ```
 
@@ -277,7 +284,7 @@ TinyGSM2 is a drop-in replacement: same headers, same `TinyGsm` / `TinyGsmClient
 1. Remove the old `TinyGSM` folder from your Arduino `libraries` directory and install TinyGSM2.
 2. Rebuild your sketch.
 3. Review these behaviour changes:
-   - On ESP32 the default `TINY_GSM_RX_BUFFER` is 1024 instead of 64. That is 1 kB of RAM per client object.
+   - Nothing to change for the receive buffer: `TINY_GSM_RX_BUFFER` still defaults to 64.
    - A7672X: `gprsConnect()` keeps the carrier DNS (it used to force Google DNS). Define `TINY_GSM_A7672X_DNS` to override it.
    - A7672X: the TLS version is no longer forced to TLS 1.2. Define `TINY_GSM_A7672X_SSL_VERSION` if your server needs a specific one.
    - A7672X: when a CA certificate is set, the server certificate is now actually verified (`authmode` 1).

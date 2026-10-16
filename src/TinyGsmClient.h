@@ -23,6 +23,8 @@ typedef TinyGsmSim808::GsmClientSecureSim800 TinyGsmClientSecure;
 
 #elif defined(TINY_GSM_MODEM_SIM900)
 #include "TinyGsmClientSIM800.h"
+// The SIM900 has no SSL/TLS support (only the SIM800 driver it shares does)
+#undef TINY_GSM_MODEM_HAS_SSL
 typedef TinyGsmSim800                  TinyGsm;
 typedef TinyGsmSim800::GsmClientSim800 TinyGsmClient;
 

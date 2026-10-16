@@ -115,6 +115,7 @@ class TinyGsmA7672X : public TinyGsmModem<TinyGsmA7672X>,
     virtual int connect(const char* host, uint16_t port, int timeout_s) {
       if (!at) return 0;
       TINY_GSM_LOCK(*at);
+      clearWriteError();  // a new connection starts without a write error
       stop();
       TINY_GSM_YIELD();
       rx.clear();
@@ -172,6 +173,7 @@ class TinyGsmA7672X : public TinyGsmModem<TinyGsmA7672X>,
     int connect(const char* host, uint16_t port, int timeout_s) override {
       if (!at) return 0;
       TINY_GSM_LOCK(*at);
+      clearWriteError();  // a new connection starts without a write error
       stop();
       TINY_GSM_YIELD();
       rx.clear();

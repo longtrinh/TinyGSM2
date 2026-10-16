@@ -21,6 +21,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ***
 
 
+## [v1.0.3]
+
+### Changed
+- README: install from the PlatformIO registry (`longtrinh/TinyGSM2@^1.0.3`), list the tested companion libraries (PubSubClient 2.8 / PubSubClient3, ESP_SSLClient 2.2.2 / 3.1.3) and the extended verification.
+- `library.json`: added the `license` field (LGPL-3.0).
+- `TINY_GSM_RX_BUFFER` defaults to 64 bytes again on ESP32 too, as in TinyGSM. Sketches that don't enlarge the UART buffer (default 256 bytes) are no longer sent 1–2 kB per read. Define `TINY_GSM_RX_BUFFER 1024` together with `SerialAT.setRxBufferSize(4096)` for more throughput.
+
+### Added
+- `TINY_GSM_SEND_MAX_SIZE` (default 1024): largest chunk handed to the modem per send command.
+- `TINY_GSM_MODEM_HAS_USSD`: defined when `sendUSSD()` is available (not on u-blox SARA-R4/N4 and Digi XBee).
+- Examples: HttpsClient stops with a clear `#error` on modems without SSL/TLS. BlynkClient, Industruino and Hologram_Dash stop with one on WiFi-only modems (ESP8266/ESP32 AT firmware). They used to fail with an unrelated compiler error.
+
+### Fixed
+- SIM900: `TINY_GSM_MODEM_HAS_SSL` is no longer defined (the SIM900 has no SSL client). Sketches and examples that use `TinyGsmClientSecure` only when SSL is available (WebClient, Diagnostics, AllFunctions, test_build) now compile for the SIM900 and use a plain TCP client.
+- AllFunctions example: the USSD test is only built for modems that support USSD, so the example compiles for the SARA-R4 and XBee again.
+- SIM800_SslSetCert example: uses SoftwareSerial on the Uno/Nano (ATmega328P), like the other examples, instead of the missing `Serial1`.
+- `GsmClient::write()` sets the Arduino write error (`getWriteError()`) when the modem refuses data, and every driver's `connect()` clears it. ESP_SSLClient (2.2.2 and 3.1.3) uses it to tell a failed send from a closed socket; before, a refused send ended the TLS session without reporting an error.
+- `GsmClient::write()` splits data into chunks of at most `TINY_GSM_SEND_MAX_SIZE` bytes and returns the total sent. Before, one `write()` became one modem send command, which the modem rejects above its limit (e.g. SIM7600 1500, SIM800/BG96 1460, u-blox 1024 bytes). PubSubClient (legacy 2.8 and PubSubClient3) writes a whole MQTT packet at once, and ESP_SSLClient a whole TLS record (up to its buffer size, e.g. 1536 bytes). Publishing a message, or sending a TLS record, larger than that limit failed. Verified with both PubSubClient versions against a simulated modem: 1.8 kB publishes and 3 kB streamed publishes now arrive byte-exact.
+- SIM7600, SIM5360, SIM800, SIM7000: socket reads are limited to the modem's per-request maximum for `AT+CIPRXGET` (750/1500 bytes, or 730/1460 on SIM800/SIM7000, in HEX/text mode). With a larger `TINY_GSM_RX_BUFFER` (e.g. TinyGSM2's earlier 1024-byte ESP32 default), HEX-mode reads (`TINY_GSM_USE_HEX`) were rejected with ERROR and no data was received.
+- `localIP()` returned 0.0.0.0 on modems that answer with a prefix (e.g. SIM7600 / SIM5360 `+IPADDR: 10.1.2.3`); `TinyGsmIpFromString()` again ignores text before the address, as in TinyGSM. It also reads `<cid>,<ip>` correctly (TinyGSM turned `1,10.1.2.3` into `110.1.2.3`), and no longer mistakes host names like `abc123.example.com` for IP addresses.
+
+***
+
+
 ## [v1.0.2]
 
 ### Changed

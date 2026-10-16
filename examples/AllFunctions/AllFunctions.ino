@@ -238,7 +238,7 @@ void loop() {
   DBG("Signal quality:", csq);
 #endif
 
-#if TINY_GSM_TEST_USSD && defined TINY_GSM_MODEM_HAS_SMS
+#if TINY_GSM_TEST_USSD && defined TINY_GSM_MODEM_HAS_USSD
   String ussd_balance = modem.sendUSSD("*111#");
   DBG("Balance (USSD):", ussd_balance);
 
