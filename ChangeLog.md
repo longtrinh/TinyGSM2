@@ -11,11 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ****
 ### Changed
-- README: new "PlatformIO and ESP-IDF" section (VS Code + PlatformIO, the official vs. pioarduino platforms, ESP-IDF with Arduino as a component). The install instructions now start with the Arduino Library Manager.
 
 ### Added
 
 ### Removed
+
+### Fixed
+
+***
+
+
+## [v1.0.2]
+
+### Changed
+- README: new "PlatformIO and ESP-IDF" section (VS Code + PlatformIO, the official vs. pioarduino platforms, ESP-IDF with Arduino as a component). The install instructions now start with the Arduino Library Manager.
 
 ### Fixed
 - SARA-R5: when searching the PDP contexts, the APN is only compared if `sscanf()` actually parsed it. Before, an unparsable line compared an uninitialized buffer. This also removes the `scanned set but not used` warning, which is an error with `-Werror=all` (GCC 15 / ESP-IDF 6.1).

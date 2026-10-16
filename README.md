@@ -2,7 +2,7 @@
 
 A small Arduino library for GSM, LTE and WiFi modules with an AT-command interface, updated for **arduino-esp32 3.x** (ESP-IDF 5.x). It still builds on arduino-esp32 2.x.
 
-[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/longtrinh/TinyGSM2/releases)
+[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/longtrinh/TinyGSM2/releases)
 [![License](https://img.shields.io/badge/license-LGPL--3.0-blue.svg)](LICENSE)
 
 TinyGSM2 is a fork of [TinyGSM](https://github.com/vshymanskyy/TinyGSM) 0.12.0 by Volodymyr Shymanskyy and contributors.
@@ -118,7 +118,7 @@ Alternatively, download a release ZIP and use **Sketch → Include Library → A
 **PlatformIO**
 ```ini
 lib_deps =
-    https://github.com/longtrinh/TinyGSM2.git#v1.0.1
+    https://github.com/longtrinh/TinyGSM2.git#v1.0.2
 ```
 See [PlatformIO and ESP-IDF](#platformio-and-esp-idf) for platform choices and ESP-IDF use.
 
@@ -230,7 +230,7 @@ TinyGSM2 is not in the PlatformIO registry; install it from GitHub, ideally pinn
 platform  = espressif32
 board     = esp32-s3-devkitc-1
 framework = arduino
-lib_deps  = https://github.com/longtrinh/TinyGSM2.git#v1.0.1
+lib_deps  = https://github.com/longtrinh/TinyGSM2.git#v1.0.2
 build_flags = -D TINY_GSM_MODEM_A7672X
 ```
 
