@@ -2,6 +2,7 @@
 
 A small Arduino library for GSM, LTE and WiFi modules with an AT-command interface, updated for **arduino-esp32 3.x** (ESP-IDF 5.x). It still builds on arduino-esp32 2.x.
 
+[![CI](https://github.com/longtrinh/TinyGSM2/actions/workflows/ci.yml/badge.svg)](https://github.com/longtrinh/TinyGSM2/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/longtrinh/TinyGSM2/releases)
 [![License](https://img.shields.io/badge/license-LGPL--3.0-blue.svg)](LICENSE)
 
@@ -18,7 +19,7 @@ It also fixes the stability problems that appear with the current ESP32 Arduino 
 > Every modem driver compiles warning-free with the arduino-esp32 3.3.12 toolchain and the ESP-IDF 6.1 toolchain (`-Werror=all`), with and without `TINY_GSM_USE_MUTEX`.
 > Full linked builds also passed for ESP32, ESP32-S3, ESP32-C3, ESP8266, AVR, and PlatformIO (official `espressif32` platform).
 > All example sketches compile for every supported modem on ESP32-S3, Arduino Mega and Arduino Uno.
-> PubSubClient (legacy 2.8 and PubSubClient3) and ESP_SSLClient (2.2.2 and 3.1.3) were tested on top of TinyGSM2 with a simulated modem.
+> PubSubClient (legacy 2.8 and PubSubClient3) and ESP_SSLClient (2.2.2 and 3.1.3) were tested on top of TinyGSM2 with a simulated modem; the PubSubClient tests and a model of the ESP_SSLClient socket logic ([extras/tests](extras/tests)) run in CI on every push.
 > The changes have **not yet been tested on real modem hardware**, so please test them in your setup and report any problems in [Issues](https://github.com/longtrinh/TinyGSM2/issues).
 
 - [Why TinyGSM2?](#why-tinygsm2)

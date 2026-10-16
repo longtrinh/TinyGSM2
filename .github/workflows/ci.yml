@@ -1,0 +1,136 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Arduino Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: arduino/arduino-lint-action@v2
+        with:
+          library-manager: update
+          compliance: strict
+
+  host-tests:
+    name: Host tests (g++)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Fetch PubSubClient 2.8 and PubSubClient3
+        run: |
+          git clone --quiet --depth 1 --branch v2.8 https://github.com/knolleary/pubsubclient.git "$RUNNER_TEMP/pubsubclient"
+          git clone --quiet --depth 1 --branch v3.3.2 https://github.com/hmueller01/pubsubclient3.git "$RUNNER_TEMP/pubsubclient3"
+      - name: Build and run
+        run: bash extras/tests/run_tests.sh "$RUNNER_TEMP/pubsubclient/src" "$RUNNER_TEMP/pubsubclient3/src"
+
+  compile:
+    name: ${{ matrix.board }} / ${{ matrix.modem }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        board: [esp32s3, esp32-core2, mega, uno, esp8266, rp2040, mkrzero, stm32]
+        modem: [SIM800, SIM7600, A7672X, BG96, UBLOX, ESP8266]
+        # Every modem on the main targets; SIM800 and SIM7600 on the others
+        exclude:
+          - { board: esp8266, modem: A7672X }
+          - { board: esp8266, modem: BG96 }
+          - { board: esp8266, modem: UBLOX }
+          - { board: esp8266, modem: ESP8266 }
+          - { board: rp2040, modem: A7672X }
+          - { board: rp2040, modem: BG96 }
+          - { board: rp2040, modem: UBLOX }
+          - { board: rp2040, modem: ESP8266 }
+          - { board: mkrzero, modem: A7672X }
+          - { board: mkrzero, modem: BG96 }
+          - { board: mkrzero, modem: UBLOX }
+          - { board: mkrzero, modem: ESP8266 }
+          - { board: stm32, modem: A7672X }
+          - { board: stm32, modem: BG96 }
+          - { board: stm32, modem: UBLOX }
+          - { board: stm32, modem: ESP8266 }
+        include:
+          - modem: SIM7600
+            extra-flags: -DTINY_GSM_USE_HEX
+          # The HttpClient example's default 650-byte RX buffer leaves the Uno
+          # 56 bytes short of RAM with the A7672X driver
+          - board: uno
+            modem: A7672X
+            extra-flags: -DTINY_GSM_RX_BUFFER=256
+          - board: esp32s3
+            fqbn: esp32:esp32:esp32s3
+            platforms: |
+              - name: esp32:esp32
+                source-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          - board: esp32-core2
+            fqbn: esp32:esp32:esp32
+            platforms: |
+              - name: esp32:esp32
+                version: 2.0.17
+                source-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          - board: mega
+            fqbn: arduino:avr:mega
+            platforms: |
+              - name: arduino:avr
+          - board: uno
+            fqbn: arduino:avr:uno
+            platforms: |
+              - name: arduino:avr
+          - board: esp8266
+            fqbn: esp8266:esp8266:generic
+            platforms: |
+              - name: esp8266:esp8266
+                source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          - board: rp2040
+            fqbn: rp2040:rp2040:rpipico
+            platforms: |
+              - name: rp2040:rp2040
+                source-url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+          - board: mkrzero
+            fqbn: arduino:samd:mkrzero
+            platforms: |
+              - name: arduino:samd
+          - board: stm32
+            fqbn: STMicroelectronics:stm32:GenF1:pnum=BLUEPILL_F103CB
+            platforms: |
+              - name: STMicroelectronics:stm32
+                source-url: https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json
+    steps:
+      - uses: actions/checkout@v5
+      # The examples select SIM800 themselves; comment that out so the modem
+      # comes from the build flag below
+      - name: Let the build flag select the modem
+        run: |
+          sed -i 's|^#define TINY_GSM_MODEM_SIM800\b|// &|' examples/WebClient/WebClient.ino examples/MqttClient/MqttClient.ino examples/HttpClient/HttpClient.ino
+          ! grep -n '^#define TINY_GSM_MODEM_' examples/WebClient/WebClient.ino examples/MqttClient/MqttClient.ino examples/HttpClient/HttpClient.ino extras/test_build/test_build.ino
+      - uses: arduino/compile-sketches@v1
+        with:
+          fqbn: ${{ matrix.fqbn }}
+          platforms: ${{ matrix.platforms }}
+          libraries: |
+            - source-path: ./
+            - name: PubSubClient
+            - name: ArduinoHttpClient
+            - name: StreamDebugger
+            - name: CRC32
+          sketch-paths: |
+            - extras/test_build
+            - examples/WebClient
+            - examples/MqttClient
+            - examples/HttpClient
+          cli-compile-flags: |
+            - --build-property
+            - compiler.cpp.extra_flags=-DTINY_GSM_MODEM_${{ matrix.modem }} ${{ matrix.extra-flags }}
