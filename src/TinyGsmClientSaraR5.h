@@ -353,6 +353,9 @@ class TinyGsmSaraR5 : public TinyGsmModem<TinyGsmSaraR5>,
  protected:
   bool gprsConnectImpl(const char* apn, const char* user = nullptr,
                        const char* pwd = nullptr) {
+    // The SARA-R5 ignores the UPSD user name and password (see below)
+    (void)user;
+    (void)pwd;
     sendAT(GF("+CGATT=1"));  // attach to GPRS
     if (waitResponse(360000L) != 1) { return false; }
 

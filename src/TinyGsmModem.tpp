@@ -722,7 +722,9 @@ class TinyGsmModem {
                  data.endsWith(GFP(GSM_VERBOSE_2))) {
           // check how long the new line is
           // should be either 1 ('\r' or '\n') or 2 ("\r\n"))
-          int len_atnl = strnlen(AT_NL, 3);
+          // (AT_NL is a string literal; strnlen(AT_NL, 3) on the 2-byte "\r"
+          // trips GCC 15's -Wstringop-overread, an error in ESP-IDF builds)
+          const int len_atnl = static_cast<int>(sizeof(AT_NL) - 1);
           // Read out the verbose message, until the last character of the new
           // line
           data += thisModem().stream.readStringUntil(AT_NL[len_atnl - 1]);

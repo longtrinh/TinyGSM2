@@ -544,6 +544,8 @@ class TinyGsmSim800 : public TinyGsmModem<TinyGsmSim800>,
     sendAT(GF("+CIPSSL=1,1"));
     if (waitResponse() != 1) return false;
 #endif
+#else
+    (void)ssl;  // the SIM900 has no SSL client
 #endif
     sendAT(GF("+CIPSTART="), mux, ',', GF("\"TCP"), GF("\",\""), host,
            GF("\","), port);

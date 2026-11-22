@@ -21,6 +21,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ***
 
 
+## [v1.0.4]
+
+Checked against arduino-esp32 4.0.0 (ESP-IDF 6.1.1, GCC 15.2), ESP-IDF 6.1 and the PlatformIO `espressif32` 8.0.0 platform (arduino-esp32 3.3.12).
+No API changes; existing sketches build unchanged.
+
+### Changed
+- README: arduino-esp32 4.x and ESP-IDF 6.x support, PlatformIO `espressif32` 8.x (which ships arduino-esp32 3.3.12 instead of 2.0.x, and supports `framework = arduino, espidf`), and `idf.py add-dependency "espressif/arduino-esp32^4.0.0"`.
+- On ESP32, `TINY_GSM_YIELD_MS` is converted to FreeRTOS ticks and always waits at least one tick. With a tick rate below 1000 Hz (Arduino as an ESP-IDF component built with `ARDUINO_SKIP_TICK_CHECK`), a short `TINY_GSM_YIELD_MS` used to become `vTaskDelay(0)`, which can trip the task watchdog.
+
+### Added
+- `extras/tests/idf_flags_check.sh`: compiles every driver the way ESP-IDF 6.x compiles a component (`-std=gnu++26 -Wall -Wextra -Werror`) against an installed arduino-esp32 core.
+- CI: that check for ESP32-S3 and ESP32-C3 (with and without `TINY_GSM_USE_MUTEX` and `TINY_GSM_DEBUG`), and builds with arduino-esp32 3.3.12 besides the latest core (4.x) and 2.0.17.
+
+### Fixed
+- `TINY_GSM_DEBUG` builds no longer fail as an ESP-IDF component with GCC 15: reading a verbose error (`+CME ERROR:`) used `strnlen(AT_NL, 3)`, which GCC 15 reports as `-Wstringop-overread` for modems whose `AT_NL` is `"\r"` (Digi XBee). ESP-IDF builds treat that warning as an error.
+- Unused-parameter warnings (`-Wextra`) in the SIM900 build of the SIM800 driver and in the u-blox SARA-R5 `gprsConnect()` (the SARA-R5 ignores the user name and password).
+
+***
+
+
 ## [v1.0.3]
 
 ### Changed

@@ -1,9 +1,9 @@
 # TinyGSM2
 
-A small Arduino library for GSM, LTE and WiFi modules with an AT-command interface, updated for **arduino-esp32 3.x** (ESP-IDF 5.x). It still builds on arduino-esp32 2.x.
+A small Arduino library for GSM, LTE and WiFi modules with an AT-command interface, updated for **arduino-esp32 3.x and 4.x** (ESP-IDF 5.x and 6.x). It still builds on arduino-esp32 2.x.
 
 [![CI](https://github.com/longtrinh/TinyGSM2/actions/workflows/ci.yml/badge.svg)](https://github.com/longtrinh/TinyGSM2/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/longtrinh/TinyGSM2/releases)
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://github.com/longtrinh/TinyGSM2/releases)
 [![License](https://img.shields.io/badge/license-LGPL--3.0-blue.svg)](LICENSE)
 
 TinyGSM2 is a fork of [TinyGSM](https://github.com/vshymanskyy/TinyGSM) 0.12.0 by Volodymyr Shymanskyy and contributors.
@@ -13,12 +13,13 @@ It also fixes the stability problems that appear with the current ESP32 Arduino 
 > **🤖 Modified by an AI agent**
 >
 > The changes in TinyGSM2 were made by **Claude**, Anthropic's AI coding agent (Claude Code, model Claude Opus 5.5), working under the direction of [longtrinh](https://github.com/longtrinh).
-> Claude analyzed TinyGSM 0.12.0 against the arduino-esp32 3.3.12 source and the SIMCom A76XX AT Command Manual V2.04.
+> Claude analyzed TinyGSM 0.12.0 against the arduino-esp32 3.3.12 source and the SIMCom A76XX AT Command Manual V2.04,
+> and later checked TinyGSM2 against arduino-esp32 4.0.0, ESP-IDF 6.1.1 and the PlatformIO `espressif32` 8.0.0 platform.
 > It then implemented the fixes, the README and the changelog.
 >
-> Every modem driver compiles warning-free with the arduino-esp32 3.3.12 toolchain and the ESP-IDF 6.1 toolchain (`-Werror=all`), with and without `TINY_GSM_USE_MUTEX`.
-> Full linked builds also passed for ESP32, ESP32-S3, ESP32-C3, ESP8266, AVR, and PlatformIO (official `espressif32` platform).
-> All example sketches compile for every supported modem on ESP32-S3, Arduino Mega and Arduino Uno.
+> Every modem driver compiles warning-free (`-Wall -Wextra -Werror`) with arduino-esp32 4.0.0 (ESP-IDF 6.1.1, GCC 15.2), both as an Arduino sketch (C++20) and with the C++26 flags ESP-IDF 6 uses for components, with and without `TINY_GSM_USE_MUTEX` and `TINY_GSM_DEBUG`.
+> Full linked builds also passed for arduino-esp32 4.0.0, 3.3.12 and 2.0.17, ESP8266, AVR, and PlatformIO `espressif32` 8.0.0 (`framework = arduino` and `framework = arduino, espidf`).
+> All example sketches compile for every supported modem on ESP32-S3, Arduino Mega and Arduino Uno (the `AT_Spy` tool only on AVR, as it needs AltSoftSerial); with arduino-esp32 4.0.0 they were rebuilt on ESP32-S3 for the A7672X, and the main ones also for SIM7600, SIM800, BG96 and XBee.
 > PubSubClient (legacy 2.8 and PubSubClient3) and ESP_SSLClient (2.2.2 and 3.1.3) were tested on top of TinyGSM2 with a simulated modem; the PubSubClient tests and a model of the ESP_SSLClient socket logic ([extras/tests](extras/tests)) run in CI on every push.
 > The changes have **not yet been tested on real modem hardware**, so please test them in your setup and report any problems in [Issues](https://github.com/longtrinh/TinyGSM2/issues).
 
@@ -38,7 +39,7 @@ It also fixes the stability problems that appear with the current ESP32 Arduino 
 ## Why TinyGSM2?
 
 TinyGSM 0.12.0 was released in May 2024, before arduino-esp32 3.x matured.
-On current cores (tested against 3.3.12, ESP-IDF 5.5, GCC 14) it still compiles, but it misbehaves at runtime.
+On current cores (tested against 3.3.12 and 4.0.0, ESP-IDF 5.5 and 6.1, GCC 14 and 15) it still compiles, but it misbehaves at runtime.
 TinyGSM2 fixes this:
 
 **ESP32 / FreeRTOS**
@@ -46,7 +47,7 @@ TinyGSM2 fixes this:
 - The library yields only while it is waiting, never once per received byte, so modem data bursts are not lost.
 - Socket data is read in chunks, and a read time-out no longer inserts `0xFF` bytes into your data.
 - Bigger receive buffers are safe: each read stays within the modem's per-request limit. The default is still 64 bytes, as in TinyGSM.
-- IPv6-aware handling of the dual-stack `IPAddress` in core 3.x. Core 2.x (used by PlatformIO's `espressif32` platform) still builds, with IPv4 only.
+- IPv6-aware handling of the dual-stack `IPAddress` in core 3.x and 4.x. Core 2.x still builds, with IPv4 only.
 - `TinyGsmAutoBaud()` keeps the pins and buffer sizes of an already started `HardwareSerial`.
 - Optional mutex (`TINY_GSM_USE_MUTEX`) so several FreeRTOS tasks can share one modem safely.
 
@@ -124,7 +125,7 @@ Alternatively, download a release ZIP and use **Sketch → Include Library → A
 **PlatformIO**: TinyGSM2 is in the [PlatformIO registry](https://registry.platformio.org/libraries/longtrinh/TinyGSM2) (search for "TinyGSM2" in the PlatformIO **Libraries** view):
 ```ini
 lib_deps =
-    longtrinh/TinyGSM2@^1.0.3
+    longtrinh/TinyGSM2@^1.0.4
 ```
 See [PlatformIO and ESP-IDF](#platformio-and-esp-idf) for platform choices and ESP-IDF use.
 
@@ -223,7 +224,7 @@ To keep a group of calls together (or to protect functions that only exist in on
 Don't route `TINY_GSM_DEBUG` there in production, or call `Serial.setTxTimeoutMs(0)`.
 - **Core `HTTPClient` / `HTTPUpdate` cannot use a modem client.** They only accept a `NetworkClient`.
 Use [ArduinoHttpClient](https://github.com/arduino-libraries/ArduinoHttpClient) instead, and stream OTA downloads into `Update.h` yourself.
-- **Alternative: PPP.** arduino-esp32 3.x also ships a native `PPP` library.
+- **Alternative: PPP.** arduino-esp32 3.x and 4.x also ship a native `PPP` library.
 It turns the modem into a full lwIP network interface, so `NetworkClient`, `NetworkClientSecure`, `HTTPClient` and the rest work unchanged.
 That can be a good fit for TCP/TLS-heavy projects; TinyGSM2 remains handy for SMS, calls, GNSS and modem management.
 
@@ -238,19 +239,21 @@ Install TinyGSM2 from the PlatformIO registry, pinned to a version range:
 platform  = espressif32
 board     = esp32-s3-devkitc-1
 framework = arduino
-lib_deps  = longtrinh/TinyGSM2@^1.0.3
+lib_deps  = longtrinh/TinyGSM2@^1.0.4
 build_flags = -D TINY_GSM_MODEM_A7672X
 ```
 
-- **Official `espressif32` platform.** It ships arduino-esp32 **2.0.x**. TinyGSM2 builds and runs there, but IPv6 `IPAddress` support is off (it needs core 3.x).
-Verified with PlatformIO Core 6.2 / platform 7.1.3 (Arduino 2.0.17) on ESP32-S3 and ESP32-C3.
-- **arduino-esp32 3.x in PlatformIO.** Use the community [pioarduino](https://github.com/pioarduino/platform-espressif32) platform, which ships the same 3.x core that the Arduino IDE uses:
+- **Official `espressif32` platform 8.x.** Version 8.0.0 ships arduino-esp32 **3.3.12** (GCC 14.2), so IPv6 `IPAddress` support is on.
+Verified with PlatformIO Core 6.2 / platform 8.0.0 on ESP32, ESP32-S2, ESP32-S3, ESP32-C3 and ESP32-C6.
+- **Older official platforms (7.x and earlier)** ship arduino-esp32 **2.0.x**. TinyGSM2 builds and runs there too, but with IPv4 only.
+- **arduino-esp32 4.x in PlatformIO.** The official platform does not ship core 4.x yet. A community platform such as [pioarduino](https://github.com/pioarduino/platform-espressif32) follows the newest arduino-esp32 releases:
   ```ini
   platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
   ```
+- **`framework = arduino, espidf`** (Arduino as an ESP-IDF component) works. Platform 8.0.0 builds it with ESP-IDF 5.5.5 and arduino-esp32 3.3.12.
+Add `CONFIG_FREERTOS_HZ=1000` and `CONFIG_AUTOSTART_ARDUINO=y` to `sdkconfig.defaults`, as in the platform's `espidf-arduino-blink` example.
 - **`framework = espidf` alone is not supported.**
-TinyGSM2 is built on the Arduino API (`Stream`, `Client`, `String`, `millis()`), so PlatformIO skips it in a pure ESP-IDF project.
-Use `framework = arduino, espidf` (Arduino as an ESP-IDF component) on a platform that supports it, such as pioarduino.
+TinyGSM2 is built on the Arduino API (`Stream`, `Client`, `String`, `millis()`), so PlatformIO skips it in a pure ESP-IDF project. Use `framework = arduino, espidf` instead.
 - **VS Code IntelliSense:** to get code highlighting when you open the library's `.tpp` template files, add this to `.vscode/settings.json`:
   ```json
   "files.associations": { "*.tpp": "cpp" }
@@ -259,11 +262,11 @@ Use `framework = arduino, espidf` (Arduino as an ESP-IDF component) on a platfor
 ### ESP-IDF (`idf.py`) with Arduino as a component
 
 TinyGSM2 includes a `CMakeLists.txt`, so it can be used as an ESP-IDF component.
-It requires the arduino-esp32 component (3.x supports ESP-IDF 5.3 – 6.1).
+It requires the arduino-esp32 component: 3.x and 4.0 support ESP-IDF 5.3 – 6.1.
 
 1. Add Arduino to your ESP-IDF project:
    ```bash
-   idf.py add-dependency "espressif/arduino-esp32^3.3.0"
+   idf.py add-dependency "espressif/arduino-esp32^4.0.0"
    ```
 2. Clone TinyGSM2 into the project's `components` folder:
    ```bash
@@ -273,10 +276,11 @@ It requires the arduino-esp32 component (3.x supports ESP-IDF 5.3 – 6.1).
 4. Configure the project for Arduino as Espressif describes in [Arduino as an ESP-IDF component](https://docs.espressif.com/projects/arduino-esp32/en/latest/esp-idf_component.html). For example, `CONFIG_FREERTOS_HZ=1000`.
 
 TinyGSM2 declares `REQUIRES arduino-esp32`. That name matches the component added in step 1.
-If you copied arduino-esp32 into `components/` by hand, name that folder `arduino-esp32`, not `arduino`.
+If you copied arduino-esp32 into `components/` by hand, name that folder `arduino-esp32`, not `arduino` (Espressif's manual-installation steps use `arduino`, which TinyGSM2 cannot find).
 
-TinyGSM2 compiles warning-free with the ESP-IDF 6.1 toolchain (GCC 15.2) using `-Wall -Wextra -Werror=all`.
-A complete `idf.py` application build has not been tested yet.
+ESP-IDF 6.x compiles components as C++26 (`-std=gnu++26`) with `-Werror`, which is stricter than an Arduino IDE build.
+TinyGSM2 compiles warning-free that way with arduino-esp32 4.0.0 (ESP-IDF 6.1.1, GCC 15.2) using `-Wall -Wextra -Werror`; [extras/tests/idf_flags_check.sh](extras/tests/idf_flags_check.sh) runs this check, also in CI.
+A complete `idf.py` application build with ESP-IDF 6.1 has not been tested yet; the PlatformIO `framework = arduino, espidf` build (ESP-IDF 5.5.5) has.
 
 ## Migrating from TinyGSM
 

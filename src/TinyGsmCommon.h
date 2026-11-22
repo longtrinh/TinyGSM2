@@ -10,7 +10,7 @@
 #define SRC_TINYGSMCOMMON_H_
 
 // The current library version number
-#define TINYGSM_VERSION "1.0.3"
+#define TINYGSM_VERSION "1.0.4"
 
 #if defined(SPARK) || defined(PARTICLE)
 #include "Particle.h"
@@ -36,9 +36,8 @@
 #include <esp_arduino_version.h>
 #endif
 #endif
-// arduino-esp32 3.x adds a dual-stack (IPv4/IPv6) IPAddress and
-// Stream::getTimeout(); 2.x (still used by PlatformIO's espressif32 platform)
-// has neither.
+// arduino-esp32 3.x and later (4.x) have a dual-stack (IPv4/IPv6) IPAddress
+// and Stream::getTimeout(); 2.x has neither.
 #if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
 #define TINY_GSM_ESP32_CORE3
 #endif
@@ -51,12 +50,19 @@
 // TINY_GSM_YIELD() is only called while waiting for the modem, never while
 // data is flowing.  On ESP32 delay(0) is vTaskDelay(0), which never lets the
 // IDLE task run; a long wait on core 0 then trips the task watchdog (which
-// panics/reboots by default on arduino-esp32 3.x).  Block for at least one
-// tick instead.
+// panics/reboots by default on arduino-esp32 3.x and 4.x).  Block for at
+// least one tick instead.  delay(ms) is vTaskDelay(ms / portTICK_PERIOD_MS),
+// which is also 0 ticks when TINY_GSM_YIELD_MS is shorter than one tick
+// (e.g. Arduino as an ESP-IDF component built with ARDUINO_SKIP_TICK_CHECK
+// and the IDF default 100 Hz tick), so convert the time to ticks here.
 #ifndef TINY_GSM_YIELD
-#if defined(TINY_GSM_PLATFORM_ESP32) && TINY_GSM_YIELD_MS == 0
-#define TINY_GSM_YIELD() \
-  { vTaskDelay(1); }
+#if defined(TINY_GSM_PLATFORM_ESP32)
+#define TINY_GSM_YIELD()                                    \
+  {                                                         \
+    vTaskDelay(pdMS_TO_TICKS(TINY_GSM_YIELD_MS) > 0         \
+                   ? pdMS_TO_TICKS(TINY_GSM_YIELD_MS)       \
+                   : static_cast<TickType_t>(1));           \
+  }
 #else
 #define TINY_GSM_YIELD() \
   { delay(TINY_GSM_YIELD_MS); }
